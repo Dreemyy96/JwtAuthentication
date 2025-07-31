@@ -26,9 +26,16 @@ namespace JWTAuthentication.Controllers
                 return BadRequest(ModelState);  
             }
 
-            await _authService.Register(user);
+            try
+            {
+                await _authService.Register(user);
 
-            return Ok();
+                return Ok();
+            }
+            catch (BadHttpRequestException ex)
+            {
+                return BadRequest(new {message = ex.Message});
+            }
         }
  
         [HttpPost]
@@ -38,18 +45,25 @@ namespace JWTAuthentication.Controllers
             {
                 return Unauthorized();
             }
-            
-            string token = await _authService.Login(loginRequest.Username, loginRequest.Password);
 
-            Response.Cookies.Append("user-token", token, new CookieOptions
+            try
             {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.Strict,
-                Expires = DateTime.UtcNow.AddMinutes(Convert.ToDouble(_config["Jwt:ExpiryInMinutes"]))
-            });
+                string token = await _authService.Login(loginRequest.Username, loginRequest.Password);
 
-            return Ok();
+                Response.Cookies.Append("user-token", token, new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.Strict,
+                    Expires = DateTime.UtcNow.AddMinutes(Convert.ToDouble(_config["Jwt:ExpiryInMinutes"]))
+                });
+
+                return Ok();
+            }
+            catch (BadHttpRequestException ex)
+            {
+                return Unauthorized(new {message = ex.Message});
+            }
         }
     }
 }

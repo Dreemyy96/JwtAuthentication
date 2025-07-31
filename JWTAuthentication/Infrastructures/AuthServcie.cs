@@ -19,7 +19,7 @@ namespace JWTAuthentication.Infrastructures
             _passwordHasher = passwordHasher;
             _jwtService = jwtService;
         }
-        public async Task Register(RegisterUser user)
+        public async Task Register(RegisterUser user, Roles userRole = Roles.User)
         {
             if (await _context.Users.AnyAsync(u=>u.Username == user.Username))
             {
@@ -37,7 +37,7 @@ namespace JWTAuthentication.Infrastructures
             _context.Users.Add(newUser);
             await _context.SaveChangesAsync();
 
-            var role = await _context.Roles.FirstOrDefaultAsync(r => r.Name == Roles.User);
+            var role = await _context.Roles.FirstOrDefaultAsync(r => r.Name == userRole);
 
             if(role == null)
             {

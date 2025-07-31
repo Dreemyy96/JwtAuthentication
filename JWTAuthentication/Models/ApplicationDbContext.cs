@@ -56,10 +56,8 @@ namespace JWTAuthentication.Models
                     Password = config["Data:AdminUser:Password"]
                 };
 
-                authService.Register(admin);
+                await authService.Register(admin, Data.Roles.Admin);
             }
-            
-
         }
         public DbSet<Product> Products { get; set; }
         public DbSet<User> Users { get; set; }
