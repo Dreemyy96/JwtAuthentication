@@ -1,4 +1,5 @@
 ﻿using JWTAuthentication.Data;
+using JWTAuthentication.Infrastructures;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -35,6 +36,7 @@ namespace JWTAuthentication.Models
         {
             ApplicationDbContext dbContext = serviceProvider.GetRequiredService<ApplicationDbContext>();
             PasswordHasher<User> passwordHasher = new PasswordHasher<User>();
+            IAuthService authService = serviceProvider.GetRequiredService<IAuthService>();
 
             foreach(var role in Enum.GetValues(typeof(Roles)))
             {
@@ -47,26 +49,14 @@ namespace JWTAuthentication.Models
 
             if (!dbContext.Users.Any(u=>u.Username == config["Data:AdminUser:Name"]))
             {
-                User user = new User()
+                var admin = new RegisterUser
                 {
                     Username = config["Data:AdminUser:Name"],
-                    Email = config["Data:AdminUser:Email"]
+                    Email = config["Data:AdminUser:Email"],
+                    Password = config["Data:AdminUser:Password"]
                 };
 
-                string password = passwordHasher.HashPassword(user, config["Data:AdminUser:Password"]);
-                user.PasswordHash = password;
-
-                await dbContext.AddAsync(user);
-                await dbContext.SaveChangesAsync();
-
-                Role adminRole = dbContext.Roles.FirstOrDefault(r => r.Name == Data.Roles.Admin);
-
-                await dbContext.UserRoles.AddAsync(new UserRoles
-                {
-                    UserId = user.Id,
-                    RoleId = adminRole.Id
-                });
-                await dbContext.SaveChangesAsync();
+                authService.Register(admin);
             }
             
 
